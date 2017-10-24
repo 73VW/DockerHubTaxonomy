@@ -4,19 +4,47 @@ Main program.
 from explore_page import explore_page_crawler, search_page_crawler
 from package_page import package_page_crawler
 from tools import print_progression, log_progression
-import threading
+import multiprocessing
 import time
 import sys
 import os
 
 def main(number_of_pages):
     """Run main program."""
-    to_be_explored = {}
-    explored = {}
 
-    #download 10 pages from http://hub.docker.com/explore
-    for i in range(1, number_of_pages+1):
-        explore_page_crawler(i, to_be_explored)
+    with multiprocessing.Manager() as manager:
+        start_time = time.time()
+
+        to_be_explored_pages = manager.dict()
+        explored_pages = manager.dict()
+
+        to_be_explored_images = manager.dict()
+        explored_images = manager.dict()
+
+        #get links in pages from http://hub.docker.com/explore
+        explore_jobs = []
+        for i in range(1, number_of_pages+1):
+            p = multiprocessing.Process(target=explore_page_crawler, args=(i,to_be_explored_pages,explored_pages,to_be_explored_images,explored_images,))
+            explore_jobs.append(p)
+            p.start()
+
+
+        #now go through all pages contained in the page_queue using processes
+        crawl_jobs = []
+        """
+        for i in range(10):
+            p = multiprocessing.Process(target=package_page_crawler, args=(page_queue,image_queue, lock,))
+            crawl_jobs.append(p)
+            p.start()
+        """
+        #cleaning
+        for job in explore_jobs:
+            job.join()
+
+        stop_time = time.time()
+        duration = stop_time - start_time
+
+        print("Total duration : {}s".format(duration))
 
     # TODO implement a search function
     #search link looks like this :
@@ -29,7 +57,7 @@ def main(number_of_pages):
 
     # TODO implement multi-thread search and crawl
     # one for explore page, one for package page
-
+    """
     while to_be_explored:
         log_progression(to_be_explored, explored)
         page, link = to_be_explored.popitem()
@@ -40,9 +68,12 @@ def main(number_of_pages):
         package_page_crawler(page, link, to_be_explored, explored)
 
     print(str(len(explored)) + " packages explored")
+    """
 
 if __name__ == "__main__":
-    """Catch main function."""
+    #WARNING only 10 pages are offered under explore
+    number_of_pages = 10
+
     clear_console = 'clear'
     os.system(clear_console)
     #delete log file
@@ -50,7 +81,7 @@ if __name__ == "__main__":
     if os.path.isfile(log_file):
         os.remove(log_file)
     # Start main as a process
-    p = threading.Thread(target=main, args=(2,))
+    p = multiprocessing.Process(target=main, args=(number_of_pages,))
     p.start()
 
     # While main is running, show the program is not dead

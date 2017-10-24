@@ -25,8 +25,10 @@ def print_progression(to_be_explored, explored):
     with open("log.txt", "a") as myfile:
         myfile.write(log)
 
-def log_progression(to_be_explored, explored):
-    log = "\n\nAt "+str(datetime.now())+ " :\nNumber of explored pages : {}".format(len(explored))
-    log += "\nNumber of pages to be explored: {}".format(len(to_be_explored))
+def log_progression(to_be_explored_pages, explored_pages,to_be_explored_images,explored_images):
+    log = "\n\nAt "+str(datetime.now())+ " :\nNumber of explored pages : {}".format(len(explored_pages))
+    log += "\nNumber of pages to be explored: {}".format(len(to_be_explored_pages))
+    log += "\nNumber of explored images : {}".format(len(explored_images))
+    log += "\nNumber of images to be explored: {}".format(len(to_be_explored_images))
     with open("log.txt", "a") as myfile:
         myfile.write(log)
