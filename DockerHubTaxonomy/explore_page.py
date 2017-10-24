@@ -17,32 +17,32 @@ class ExplorePageParser(HTMLParser):
                 self.links.append(attrs['href'])
                 #print(attrs)
 
-def explore_page_crawler(number_of_pages):
+def explore_page_crawler(page_number, to_be_explored):
     """
     Return a list containing number_of_pages html pages from docker hub explore pages
     """
-    liste = []
-    for i in range(1, number_of_pages+1):
-        link = 'http://hub.docker.com/explore?page={page_number}'.format(page_number=i)
-        r = requests.get(link)
-        page = ""
-        for line in r:
-            # Decode what you receive:
-            page += line.decode(r.encoding)
+    link = 'http://hub.docker.com/explore?page={p_n}'.format(p_n=page_number)
+    download_and_get_new_packages(link, to_be_explored)
 
-        liste.append(page)
-    return find_links_in_explore_page(liste)
+def search_page_crawler(query_package, to_be_explored):
+    for page_number in range(1, 2):
+        link = 'https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page={p_n}&pullCount=0&q={q_p}&starCount=0'.format(p_n=page_number, q_p=query_package)
+        download_and_get_new_packages(link, to_be_explored)
 
-def find_links_in_explore_page(pages_list):
+def download_and_get_new_packages(link, to_be_explored):
+    r = requests.get(link)
+    find_links_in_explore_page(r.text, to_be_explored)
+    return r.status_code
+
+
+def find_links_in_explore_page(page, to_be_explored):
     """
-    Return links found in pages crawled with above function
+    Find links in pages crawled with above function
     """
-    links = {}
     parser = ExplorePageParser()
-    for page in pages_list:
-        parser.feed(page)
-        for link in parser.links:
-            package_name = link.strip('/_')
-            if package_name not in links:
-                links[package_name] = 'http://hub.docker.com' + link
-    return links
+    parser.links=list()
+    parser.feed(page)
+    for link in parser.links:
+        package_name = link.strip('/_')
+        if package_name not in to_be_explored:
+            to_be_explored[package_name] = 'http://hub.docker.com' + link

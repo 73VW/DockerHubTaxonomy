@@ -2,7 +2,7 @@ import requests
 import copy
 from html.parser import HTMLParser
 
-from tools import filter
+from tools import filter, print_progression
 
 # create a subclass and override the handler methods
 class PackagePageParser(HTMLParser):
@@ -14,29 +14,22 @@ class PackagePageParser(HTMLParser):
                 if 'href' in attrs and 'Dockerfile' in attrs['href']:
                     self.links.append(attrs['href'])
 
-def package_page_crawler(to_be_explored, explored):
+def package_page_crawler(page, link, to_be_explored, explored):
     """
     Find subpackages in package dockerfiles
     """
-    new_to_be_explored = copy.deepcopy(to_be_explored)
-    #next line is a volunteer error!
-    #normally: for page in to_be_explored
-    #Start back here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    page = to_be_explored[to_be_explored.keys()[0]]
-    r = requests.get(new_to_be_explored[page])
+    r = requests.get(link)
     package_page = r.text
     #find package dockerfiles
     dockerfiles = find_dockerfiles_in_package_page(package_page)
     #find subpackages in those dockerfiles
     for dockerfile in dockerfiles:
         line = filter("^FROM.+", dockerfile)
-        sub_package_name = line.split()[1]
-        if sub_package_name not in (explored and new_to_be_explored):
-            new_to_be_explored[sub_package_name] = 'http://hub.docker.com/_/' + sub_package_name
-    #set page explored
-    explored[page] = to_be_explored[page]
-    del new_to_be_explored[page]
-    return new_to_be_explored
+        sub_package_name = line.split()[1].split(':')[0] if line is not None else "scratch"
+        if sub_package_name not in explored and sub_package_name not in to_be_explored:
+            with open("log.txt", "a") as myfile:
+                myfile.write("\nNew package name: " + sub_package_name)
+            to_be_explored[sub_package_name] = 'http://hub.docker.com/_/' + sub_package_name
 
 
 
@@ -46,9 +39,17 @@ def find_dockerfiles_in_package_page(page):
     """
     dockerfiles = []
     parser = PackagePageParser()
+    parser.links = list()
     parser.feed(page)
     for link in parser.links:
-        link = 'https://raw.githubusercontent.com/' + link.replace('https://github.com/', '').replace('blob/', '')
+        prefix=""
+        if 'http' in link:
+            prefix="http"
+        elif 'https' in link:
+            prefix="https"
+        link.replace('prefix', '')
+        link = 'https://raw.githubusercontent.com/' + link.replace('://github.com/', '').replace('blob/', '')
         r = requests.get(link)
         dockerfiles.append(r.text)
+
     return dockerfiles
