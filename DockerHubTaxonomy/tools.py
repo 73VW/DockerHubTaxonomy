@@ -15,20 +15,31 @@ filter("^FROM.+", "FROM scratch\nFROM foo\nFROM bar")
 
 
 
-def print_progression(to_be_explored, explored):
-    log = "\n\nAt "+str(datetime.now())+ " :\nNumber of explored pages : {}\nExplored pages :\n".format(len(explored))
-    for page in explored:
-        log += page + '\t--\t' + explored[page] + '\n'
-    log += "\nNumber of pages to be explored: {}\nTo be Explored pages :\n".format(len(to_be_explored))
-    for page in to_be_explored:
-        log += page + '\t--\t' + to_be_explored[page] + '\n'
+def print_progression(to_be_explored_pages, explored_pages,to_be_explored_images,explored_images, duration):
+    log = "\n\n["+str(datetime.now())+ "]\n\tNumber of explored pages : {}\n\tExplored pages :\n".format(len(explored_pages))
+
+    #the following is needed to loop over the dict. Why? Because manager dict...
+    good_d = dict(explored_pages)
+    for page in good_d:
+        log += "\t" + page + '\t--\t' + explored_pages[page] + '\n'
+    log += "\n\tNumber of pages to be explored: {}\n\tTo be Explored pages :\n".format(len(to_be_explored_pages))
+
+    good_d = dict(to_be_explored_pages)
+    for page in good_d:
+        log += "\t" + page + '\t--\t' + to_be_explored_pages[page] + '\n'
+    log += "\n\tNumber of explored images : {}".format(len(explored_images))
+    log += "\n\tNumber of images to be explored: {}".format(len(to_be_explored_images))
+    log += "\n\tCrawl round duration : {}s".format(duration)
+
     with open("log.txt", "a") as myfile:
         myfile.write(log)
 
-def log_progression(to_be_explored_pages, explored_pages,to_be_explored_images,explored_images):
-    log = "\n\nAt "+str(datetime.now())+ " :\nNumber of explored pages : {}".format(len(explored_pages))
+def log_progression(to_be_explored_pages, explored_pages,to_be_explored_images,explored_images, duration):
+    log = "\n\n["+str(datetime.now())+ "]\nNumber of explored pages : {}".format(len(explored_pages))
     log += "\nNumber of pages to be explored: {}".format(len(to_be_explored_pages))
     log += "\nNumber of explored images : {}".format(len(explored_images))
     log += "\nNumber of images to be explored: {}".format(len(to_be_explored_images))
+    log += "\nCrawl round duration : {}s".format(duration)
+
     with open("log.txt", "a") as myfile:
         myfile.write(log)
