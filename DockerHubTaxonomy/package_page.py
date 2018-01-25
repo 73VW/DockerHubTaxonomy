@@ -1,4 +1,5 @@
 """Package page explorer process."""
+import hashlib
 import multiprocessing
 import time
 from html.parser import HTMLParser
@@ -6,7 +7,7 @@ from html.parser import HTMLParser
 import requests
 
 from dockerfile_explorer import dockerfileProcess
-from tools import log_progression
+from search_page import SearchPageProcess
 
 
 # create a subclass and override the handler methods
@@ -19,7 +20,10 @@ class PackagePageParser(HTMLParser):
         """Return dockerfiles links."""
         attrs = dict(attrs)
         if tag == "a":
-            if 'href' in attrs and 'Dockerfile' in attrs['href']:
+            if (attrs is not None
+                and 'href' in attrs
+                and attrs['href'] is not None
+                    and 'Dockerfile' in attrs['href']):
                 self.links.append(attrs['href'])
 
 
@@ -27,8 +31,7 @@ class packagePageProcess(multiprocessing.Process):
     """Process class."""
 
     def __init__(self, to_be_explored_pages, explored_pages,
-                 to_be_explored_images, explored_images, cv, cvi, cvd,
-                 dockerfile_jobs):
+                 to_be_explored_images, explored_images, cv, cvi, cvt, gq, lq):
         """Init process."""
         multiprocessing.Process.__init__(self)
         self.exit = multiprocessing.Event()
@@ -38,8 +41,9 @@ class packagePageProcess(multiprocessing.Process):
         self.explored_images = explored_images
         self.cv = cv
         self.cvi = cvi
-        self.cvd = cvd
-        self.dockerfile_jobs = dockerfile_jobs
+        self.cvt = cvt
+        self.gq = gq
+        self.lq = lq
         self.parser = PackagePageParser()
 
     def run(self):
@@ -49,11 +53,9 @@ class packagePageProcess(multiprocessing.Process):
                 self.package_page_crawler()
             except (RuntimeError, KeyboardInterrupt) as e:
                 self.shutdown()
-        print("You exited package process!")
 
     def shutdown(self):
         """Shut down process."""
-        print("Shutdown initiated")
         self.exit.set()
 
     def package_page_crawler(self):
@@ -61,29 +63,47 @@ class packagePageProcess(multiprocessing.Process):
         start_time = time.time()
         self.cv.acquire()
         while not self.to_be_explored_pages:
-            if self.cv.wait(5) is False:  # cleanup
+            if self.cv.wait(10) is False:  # cleanup
                 self.cv.release()
                 raise RuntimeError
         page, link = self.to_be_explored_pages.popitem()
         self.cv.release()
 
+        hash_object = hashlib.md5(page.encode())
+        node = "\"" + str(hash_object.hexdigest()) + "\""
+        node += " [label=\"" + page + "\", shape=point]"
+        self.gq.put(node)
+
+        p = None
+        if len(self.to_be_explored_pages) < 300:
+            # start a process to go through search pages
+            p = SearchPageProcess(self.to_be_explored_pages,
+                                  self.explored_pages,
+                                  self.to_be_explored_images,
+                                  self.explored_images,
+                                  self.cv, self.cvt, page, self.lq)
+            p.start()
+
         r = requests.get(link)
         package_page = r.text
 
         # find package dockerfiles
-        self.find_dockerfiles_in_package_page(package_page)
+        # don't need to join because process exits itself
+        self.find_dockerfiles_in_package_page(package_page, page)
 
         self.explored_pages[page] = link
         stop_time = time.time()
         duration = stop_time - start_time
 
-        log_progression(self.to_be_explored_pages, self.explored_pages,
-                        self.to_be_explored_images, self.explored_images,
-                        duration)
+        self.lq.put((len(self.to_be_explored_pages),
+                     len(self.explored_pages),
+                     len(self.to_be_explored_images),
+                     len(self.explored_images),
+                     duration))
 
-        print("Crawled page {}, duration : {}s".format(page, duration))
+        # print("Crawled page {}, duration : {}s".format(page, duration))
 
-    def find_dockerfiles_in_package_page(self, page):
+    def find_dockerfiles_in_package_page(self, page, page_name):
         """Return links found in page."""
         self.parser.links = list()
         self.parser.feed(page)
@@ -93,7 +113,7 @@ class packagePageProcess(multiprocessing.Process):
                 prefix = "https"
             else:
                 prefix = "http"
-            link = link.replace(prefix+'://github.com/', '')
+            link = link.replace(prefix + '://github.com/', '')
             link = link.replace('blob/', '')
             link = 'https://raw.githubusercontent.com/' + link
             if (link not in self.to_be_explored_images and
@@ -101,12 +121,15 @@ class packagePageProcess(multiprocessing.Process):
                 self.cvi.acquire()
                 self.to_be_explored_images.append(link)
                 self.cvi.release()
-                p = dockerfileProcess(self.to_be_explored_pages,
-                                      self.explored_pages,
-                                      self.to_be_explored_images,
-                                      self.explored_images,
-                                      self.cv, self.cvi)
-                self.cvd.acquire()
-                self.dockerfile_jobs.append(p)
-                self.cvd.release()
+                p = dockerfileProcess(
+                    self.to_be_explored_pages,
+                    self.explored_pages,
+                    self.to_be_explored_images,
+                    self.explored_images,
+                    self.cv,
+                    self.cvi,
+                    self.cvt,
+                    self.gq,
+                    page_name, self.lq)
                 p.start()
+                return p

@@ -5,8 +5,6 @@ from html.parser import HTMLParser
 
 import requests
 
-from tools import log_progression
-
 
 # create a subclass and override the handler methods
 class ExplorePageParser(HTMLParser):
@@ -31,7 +29,7 @@ class explorePageProcess(multiprocessing.Process):
     """Process class."""
 
     def __init__(self, page_number, to_be_explored_pages, explored_pages,
-                 to_be_explored_images, explored_images, cv):
+                 to_be_explored_images, explored_images, cv, cvt, lq):
         """Init process."""
         multiprocessing.Process.__init__(self)
         self.exit = multiprocessing.Event()
@@ -41,6 +39,8 @@ class explorePageProcess(multiprocessing.Process):
         self.to_be_explored_images = to_be_explored_images
         self.explored_images = explored_images
         self.cv = cv
+        self.cvt = cvt
+        self.lq = lq
         self.parser = ExplorePageParser()
 
     def run(self):
@@ -50,11 +50,9 @@ class explorePageProcess(multiprocessing.Process):
                 self.explore_page_crawler()
             finally:
                 self.shutdown()
-        print("You exited explore!")
 
     def shutdown(self):
         """Shut down process."""
-        print("Shutdown initiated")
         self.exit.set()
 
     def explore_page_crawler(self):
@@ -66,17 +64,16 @@ class explorePageProcess(multiprocessing.Process):
         start_time = time.time()
 
         base_link = 'http://hub.docker.com/explore'
-        link = base_link+'?page={p_n}'.format(p_n=self.page_number)
+        link = base_link + '?page={p_n}'.format(p_n=self.page_number)
         self.download_and_get_new_packages(link)
         stop_time = time.time()
         duration = stop_time - start_time
 
-        log_progression(self.to_be_explored_pages, self.explored_pages,
-                        self.to_be_explored_images, self.explored_images,
-                        duration)
-
-        print("Crawled page {}, duration : {}s".format(self.page_number,
-                                                       duration))
+        self.lq.put((len(self.to_be_explored_pages),
+                     len(self.explored_pages),
+                     len(self.to_be_explored_images),
+                     len(self.explored_images),
+                     duration))
 
     def download_and_get_new_packages(self, link):
         """Download and find new packages in link."""

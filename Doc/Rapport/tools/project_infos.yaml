@@ -1,0 +1,52 @@
+---
+title: Docker Hub Taxonomy
+subtitle: Projet d'automne No 212
+lang: fr
+language: french
+author:
+- lastname: Pedretti
+  firstname: Maël
+
+responsable:
+- lastname: Pasin
+  firstname: Marcelo
+- lastname: Schiavoni
+  firstname: Valerio
+
+date: \today
+pagesize: a4
+
+institut:
+  name: HE-Arc
+  logo: img/logo.jpg
+  logo_scale: 0.6
+
+# project_logo:
+# project_logo_scale: 0.4
+
+# styles
+#alignment: <alignment>
+fontsize: 12pt
+colorlinks: darkblue
+
+documentclass: scrreprt
+documentoptions: twoside
+
+numbersections: true
+
+abstractontitlepage: false
+
+toc: true
+toc-depth: 2
+lof: true
+
+abstract: |
+    \section*{Résumé}
+    Le projet Docker Hub Taxonomy a été réalisé dans le cadre du Travail d’Automne, un module de 3ème année de Bachelor au sein de la Haute-École Arc — Ingénierie, section Développement Logiciel et Multimédia. Le présent document décrit le déroulement du projet et présente les fonctionnalités implémentées.
+    Docker Hub Taxonomy est un programme en Python qui permet de parcourir Docker Hub et de récupérer les informations sur les images y étant hébergées. De plus, il permet d'afficher sous forme de graphe les dépendances entre ces images.
+
+    \section*{Abstract}
+    The Docker Hub Taxonomy project was realized within the context of the Autumn Work, a 3rd year Bachelor module within the Arc-Engineering High School, section Software and Multimedia Development. This document describes the progress of the project and presents the implemented features.
+    Docker Hub Taxonomy is a program in Python that allows you to browse Docker Hub and retrieve information about the images that are hosted on it. In addition, it allows to display in graph form the dependencies between these images.
+
+---

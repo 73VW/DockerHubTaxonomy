@@ -1,2 +1,5 @@
-DockerHubTaxonomy/log.txt
 result.log
+DockerHubTaxonomy/test
+DockerHubTaxonomy/generated/crawl-*
+DockerHubTaxonomy/.ipynb_checkpoints
+DockerHubTaxonomy/__pycache__
