@@ -1,6 +1,15 @@
-#qa
+# QA
 
 flake8
 isort
 pycodestyle
 pydocstyle
+
+# Graph
+toml
+networkx
+pyveplot
+pydotplus
+
+# Report Build
+pandocfilters

@@ -3,6 +3,7 @@ import collections
 import sys
 
 import matplotlib
+matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import networkx as nx
 
@@ -21,7 +22,7 @@ def plotStats(stats):
     aw = plt.subplot(211)
     aw.set_title("Graph grouping nodes by their number of relationships")
 
-    aw.plot(stats.keys(), stats.values(), 'r', linewidth=line_width)
+    aw.plot(list(stats.keys()), list(stats.values()), 'r', linewidth=line_width)
     aw.grid(True)
 
     plt.xlabel('Number of edges')

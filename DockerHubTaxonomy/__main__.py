@@ -25,6 +25,10 @@ def main(number_of_pages, stop_time):
     graph_target_file = current_crawl + "/graph.dot"
     log_target_file = current_crawl + "/log.txt"
 
+    # start log file
+    with open(log_target_file, "w") as myfile:
+        myfile.write("# " + str(datetime.now()))
+
     try:
         with multiprocessing.Manager() as manager:
 
@@ -102,12 +106,6 @@ if __name__ == "__main__":
     stop_time = multiprocessing.Value('d', 0)
     clear_console = 'clear'
     os.system(clear_console)
-    # delete log file
-    log_file = 'log.txt'
-
-    # start log file
-    with open(log_file, "w") as myfile:
-        myfile.write("# " + str(datetime.now()))
 
     # Start main as a process
     try:

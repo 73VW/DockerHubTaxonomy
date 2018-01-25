@@ -3,10 +3,9 @@ import sys
 from collections import OrderedDict
 
 import matplotlib
+matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import toml
-
-matplotlib.use("TkAgg")
 
 
 def plotLog(filename):
