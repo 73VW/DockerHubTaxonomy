@@ -1,0 +1,6 @@
+#qa
+
+flake8
+isort
+pycodestyle
+pydocstyle
